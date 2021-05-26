@@ -1,9 +1,9 @@
 import { Octokit } from '@octokit/core'
-const [owner, repo, workflowName, githubPAT] = process.argv.slice(2)
+const [owner, repo, workflowIdOrName, githubPAT] = process.argv.slice(2)
 
 const octokit = new Octokit({ auth: githubPAT })
 
-const getIDFromWorkflowName = async (workflowName: string) => {
+const getIDFromWorkflowName = async (workflowIdOrName: string) => {
   try {
     const allWorkflows = await octokit.request('GET /repos/{owner}/{repo}/actions/workflows', {
       owner,
@@ -12,7 +12,7 @@ const getIDFromWorkflowName = async (workflowName: string) => {
     })
 
     const idFromWorkflowName = allWorkflows.data.workflows.filter(
-      (workflow: { [key: string]: string }) => workflow.name === workflowName,
+      (workflow: { [key: string]: string }) => ((workflow.name === workflowIdOrName) || (workflow.id == workflowIdOrName) || (workflow.path.endsWith(workflowIdOrName))),
     )[0]?.id
 
     if (!idFromWorkflowName) {
@@ -34,7 +34,7 @@ const init = async () => {
     {
       owner,
       repo,
-      workflow_id: await getIDFromWorkflowName(workflowName),
+      workflow_id: await getIDFromWorkflowName(workflowIdOrName),
       per_page: 100,
     },
   )
